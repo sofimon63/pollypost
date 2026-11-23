@@ -1,0 +1,16 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PollyPost – Your gallery</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600&display=swap"><link rel="stylesheet" href="site.css"></head><body>
+<header class="site"><a href="index.html"><img class="logo" src="assets/logo.png" alt="PollyPost"></a><nav class="nav"><a class="ic grey" href="gallery.html" aria-label="Your gallery" title="Your gallery"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" fill="#efeed9"/><path d="M5 18l5-6 3 3 2-2 4 5z" fill="#6e6b5d"/><circle cx="8.5" cy="9" r="1.8" fill="#6e6b5d"/></svg></a><a class="ic red" href="editor.html?new" aria-label="Create a postcard" title="Create a postcard"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="#efeed9" stroke-width="2"/><path d="M12 7v10M7 12h10" stroke="#efeed9" stroke-width="2"/></svg></a></nav></header>
+<main class="gal"><h1>Your saved postcards</h1><div id="grid"></div></main>
+<script>
+const OWNER=localStorage.pollyOwner||(localStorage.pollyOwner=crypto.randomUUID()),HD={'x-owner':OWNER},g=document.getElementById('grid');
+const esc=t=>String(t).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt()+';');
+const EDIT='<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zM20.7 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#efeed9"/></svg>';
+const DEL='<svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 002 2h8a2 2 0 002-2V8H6v11zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="#efeed9"/></svg>';
+async function load(){
+ try{const r=await fetch('/api/postcards',{headers:HD});if(!r.ok)throw 0;const l=await r.json();
+  g.innerHTML=l.length?l.map(p=>`<figure class="pc"><div class="th">${p.thumb?`<img src="/api/blobs/${p.thumb}" alt="${esc(p.title)}">`:''}</div><figcaption><a class="ic red" href="editor.html?id=${p._id}" aria-label="Edit ${esc(p.title)}" title="Edit">${EDIT}</a><button class="ic grey" data-del="${p._id}" aria-label="Delete ${esc(p.title)}" title="Delete">${DEL}</button></figcaption></figure>`).join(''):'<p class="note">You haven’t saved any postcards yet. <a href="editor.html?new">Make your first one</a>.</p>'
+ }catch{g.innerHTML='<p class="note">Couldn’t load your postcards. Run the site with <code>netlify dev</code> and check your .env settings.</p>'}}
+g.onclick=async e=>{const b=e.target.closest('[data-del]');if(!b||!confirm('Delete this postcard? This can’t be undone.'))return;
+ await fetch('/api/postcards/'+b.dataset.del,{method:'DELETE',headers:HD});load()};
+load();
+</script></body></html>
